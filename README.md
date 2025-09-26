@@ -1,83 +1,46 @@
-# Project Overview
+# Project Overview – concise version  
 
-## Ограничения и обязательный стек
+## 📌 Restrictions & Mandatory Stack  
+- **Unity 6**  
+- **Clean Architecture** – four folders (each an Assembly Definition)  
+  - `Domain/` – pure models (`IBuildingModel`, `IEntity`)  
+  - `Application/` – use‑cases, business logic  
+  - `Presentation/` – UI Toolkit views + presenters  
+  - `Infrastructure/` – Input System, DI (VContainer), MessagePipe, adapters, persistence  
 
-- **Unity:** Unity 6  
-- **Архитектура:** Clean Architecture, слои разделены по папкам/сборкам.  
-  Рекомендуемая структура проектов (каждый слой — свой Assembly Definition):  
-
-```
-Assets/
-├─ Domain/          # Чистые модели
-├─ Application/     # Use cases, бизнес‑логика / сервисы
-├─ Presentation/    # UI Toolkit: View / Presenter
-└─ Infrastructure/  # Input System, DI, MessagePipe, адаптеры
-```
-
-- **UI:** UI Toolkit (декларативная верстка).  
+- **UI Toolkit** – declarative layout.  
 - **DI:** VContainer.  
-- **События/шина:** MessagePipe.  
-- **Реактивщина:** UniRx (R3).  
-- **Async:** UniTask.  
-- **Ввод:** Input System.  
-- **Инспектор:** TriInspector (где уместно, для удобства настройки).  
-- **Без ECS:** использовать обычные MonoBehaviour/ScriptableObject.
+- **Event bus:** MessagePipe.  
+- **Reactive streams:** UniRx (R3).  
+- **Async / timers:** UniTask (`UniTask.Delay(TimeSpan)`) + R3 `Timer`.  
+- **Input System** – WASD, right‑drag/zoom, hotkeys (`1/2/3`, `R`, `Del`).  
+- **Editor helpers:** TriInspector where needed.  
+- **No ECS:** use plain `MonoBehaviour` / `ScriptableObject`.  
 
-**Кодстайл проекта**  
-...
-
----
-
-## Функциональные требования
-
-1. **Карта и сетка**
-   - Плоская сцена с клеточной сеткой (например, 32×32).  
-   - Визуальная подсветка клетки под курсором: зелёная — можно ставить; красная — нельзя.
-
-2. **Каталог зданий**  
-| Тип здания | Стоимость | Уровни улучшения | Эффекты |
-|------------|-----------|------------------|---------|
-| Дом        | 100 Gold  | Lv1 → Lv2, Lv3   | +1 житель / мин |
-| Ферма      | 200 Gold  | Lv1 → Lv2         | +5 Gold / мин |
-| Шахта      | 150 Gold  | Lv1 → Lv2         | +10 Gold / мин |
-
-3. **Установка / Перемещение / Удаление**
-   - **Установка:** клик по допустимой клетке.  
-   - **Перемещение:** выбрать здание → режим перемещения → поставить на новую клетку (проверка занятости).  
-   - **Удаление:** через контекстное действие (кнопка в UI).  
-   - Все операции идут через Use Case (Application‑слой), не напрямую из View.
-
-4. **Улучшение зданий**
-   - Минимум 2 уровня улучшений.  
-   - Проверка ресурсов/стоимости; при нехватке — отказ с UI‑подсказкой.
-
-5. **Ресурсы и доход**
-   - Валюта Gold.  
-   - Пассивный доход от зданий раз в N секунд (или каждый тик) – реализовать без лишних аллокаций (`UniTask` + `R3` таймеры/стримы).
-
-6. **Камера и ввод**
-   - WASD / правый клик/drag — перемещение камеры; колесо — зум (Input System).  
-   - Горячие клавиши: 1/2/3 — выбор префаба здания; `R` — вращать; `Del` — удалить.
-
-7. **Сохранение/загрузка**
-   - Состояние (позиции, типы, уровни) в JSON (PlayerPrefs или файл).  
-   - Автосейв раз в X секунд (`UniTask`), кнопка «Сохранить / Загрузить» в UI.
-
-8. **UI Toolkit**
-   - Панель выбора зданий (иконки/кнопки).  
-   - Панель ресурсов и уведомлений.  
-   - Панель свойств выбранного здания (уровень, кнопка Upgrade/Move/Delete).
-
-9. **События**
-   - Коммуникация между слоями через MessagePipe (события «Здание построено», «Удалено», «Улучшено», «Недостаточно золота», «Сохранено / Загружено» и т.п.).  
-   - UseCase вызывается при помощи сообщений DTO.
+*Code style guidelines omitted – follow team convention.*
 
 ---
 
-> **Важно:** Все бизнес‑операции вынесены в слой `Application`. View отвечает только за отображение, а Presenter обрабатывает пользовательские события и публикует DTO в MessagePipe.  
+## 🚀 Functional Requirements
 
-**Рекомендации по реализации**
+| Feature | Key details |
+|---|---|
+| **Map & Grid** | Flat scene with a cell grid; cursor highlights cells—green if placeable, red otherwise. |
+| **Building Catalog** | Icons / buttons in UI Toolkit panel for selecting building prefabs. |
+| **Placement / Move / Delete** | User clicks/uses hotkeys → Presenter sends DTO to MessagePipe → Application Use Case handles the action. No direct View interaction. |
+| **Upgrades** | Minimum 2 upgrade levels; cost is checked against Gold. Insufficient gold triggers UI tooltip via event. |
+| **Resources & Income** | Gold currency, passive income generated every N seconds (or each tick) using `UniTask.Delay + R3.Timer`. Implemented without extra allocations. |
+| **Camera Controls** | WASD + right‑drag to pan; mouse wheel zoom. Hotkeys: `1/2/3` → select prefab, `R` rotate, `Del` delete. All via Input System. |
+| **Persistence** | Save/load state (positions, types, levels) as JSON in PlayerPrefs or a file. Auto‑save every X seconds (`UniTask`). Manual buttons in UI for “Save/Load”. |
+| **UI Toolkit Panels** | • Building selector (icons/buttons) <br>• Resource & notification area <br>• Selected building info panel (level, Upgrade / Move / Delete buttons) |
+| **Event Bus** | MessagePipe events: `BuildingBuilt`, `Deleted`, `Upgraded`, `InsufficientGold`, `Saved/Loaded`. Use Cases receive DTO messages. |
 
-- Использовать `IEntity`/`IBuildingModel` интерфейсы для зданий.  
-- Хранить состояние на уровне `Domain`.  
-- Для таймеров использовать `UniTask.Delay(TimeSpan)` в сочетании с `R3.Timer`.
+---
+
+## 🎯 Architecture Note  
+
+- **All business logic resides in the **Application** layer**.  
+- The **View** only renders state; it never performs operations.  
+- The **Presenter** translates user actions into DTOs and publishes them on MessagePipe, which triggers the appropriate Application use‑case.  
+
+This separation guarantees testable domain code, clear responsibilities, and a clean, maintainable project structure.
